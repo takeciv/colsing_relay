@@ -1,0 +1,4 @@
+RewriteEngine On
+
+# Hide the php directory from direct web access.
+RewriteRule ^php(/|$) - [R=404,L]
