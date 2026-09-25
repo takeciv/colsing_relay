@@ -1,0 +1,7 @@
+# アップロードディレクトリへの PHP 実行を禁止
+php_flag engine off
+RemoveHandler .php .php3 .php4 .php5 .phtml
+Options -ExecCGI
+
+# ディレクトリ一覧を非表示
+Options -Indexes

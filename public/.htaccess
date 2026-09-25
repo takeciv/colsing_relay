@@ -1,0 +1,22 @@
+RewriteEngine On
+
+# lib/ と uploads/ 以外への直接 PHP アクセスを制限
+RewriteRule ^lib/ - [R=404,L]
+
+# URL -> PHPファイルのルーティング
+# /login  -> login.php
+# /otp    -> otp.php
+# /init   -> init.php
+# /user   -> user.php
+# /index  -> index.php
+# /portal -> portal.php
+# /event  -> event.php
+# /create -> create.php
+# /preview -> preview.php
+# /edit   -> edit.php
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(login|otp|init|user|index|portal|event|create|preview|edit)$ $1.php [QSA,L]
+
+# api/ は実ファイルに任せる（上書きしない）
