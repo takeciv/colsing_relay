@@ -36,11 +36,11 @@ define('EVENT_MAX_ACTIVE', 3);
 define('SEARCH_PAGE_SIZE', 20);
 
 // ── DB接続 ────────────────────────────────────────────────
-define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
+define('DB_HOST', getenv('DB_HOST') ?: 'mysql80.ccs-cardcaptor.sakura.ne.jp');
 define('DB_PORT', getenv('DB_PORT') ?: '3306');
-define('DB_NAME', getenv('DB_NAME') ?: 'colsing_relay');
-define('DB_USER', getenv('DB_USER') ?: 'root');
-define('DB_PASS', getenv('DB_PASS') ?: '');
+define('DB_NAME', getenv('DB_NAME') ?: 'ccs-cardcaptor_relay');
+define('DB_USER', getenv('DB_USER') ?: 'ccs-cardcaptor');
+define('DB_PASS', getenv('DB_PASS') ?: '12345abc');
 define('DB_CHARSET', 'utf8mb4');
 
 // ── Web Push (VAPID) ──────────────────────────────────────
