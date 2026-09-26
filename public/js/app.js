@@ -22,25 +22,47 @@ if ('serviceWorker' in navigator) {
  */
 async function subscribePush() {
   const statusEl = document.getElementById('push-notify-status');
+  const btn      = document.getElementById('push-notify-btn');
 
+  // ① まず通知許可を求める（VAPID鍵の有無より先に実行）
+  if (!('Notification' in window)) {
+    if (statusEl) statusEl.textContent = 'このブラウザは通知に対応していません。';
+    return 'error';
+  }
+
+  let perm;
+  try {
+    perm = await Notification.requestPermission();
+  } catch (e) {
+    if (statusEl) statusEl.textContent = '通知許可の取得中にエラーが発生しました。';
+    return 'error';
+  }
+
+  if (perm !== 'granted') {
+    if (statusEl) statusEl.textContent = '通知の許可が得られませんでした。ブラウザの設定を確認してください。';
+    if (btn) {
+      btn.textContent = 'プッシュ通知がブロックされています';
+      btn.disabled = true;
+    }
+    return 'denied';
+  }
+
+  // ② PushManager の対応確認
   if (!('PushManager' in window)) {
     if (statusEl) statusEl.textContent = 'このブラウザはプッシュ通知に対応していません。';
     return 'error';
   }
-  const metaKey = document.querySelector('meta[name="vapid-public-key"]');
-  if (!metaKey || !metaKey.getAttribute('content')) {
-    if (statusEl) statusEl.textContent = 'プッシュ通知の設定が未完了です。';
+
+  // ③ VAPID鍵の確認
+  const metaKey   = document.querySelector('meta[name="vapid-public-key"]');
+  const publicKey = metaKey ? metaKey.getAttribute('content') : '';
+  if (!publicKey) {
+    if (statusEl) statusEl.textContent = 'プッシュ通知サーバーの設定が未完了です。管理者にお問い合わせください。';
     return 'error';
   }
-  const publicKey = metaKey.getAttribute('content');
 
+  // ④ 購読してサーバーへ送信
   try {
-    const perm = await Notification.requestPermission();
-    if (perm !== 'granted') {
-      if (statusEl) statusEl.textContent = '通知の許可が得られませんでした。ブラウザの設定を確認してください。';
-      return 'denied';
-    }
-
     const sw = await navigator.serviceWorker.ready;
     let sub = await sw.pushManager.getSubscription();
     if (!sub) {
@@ -49,7 +71,6 @@ async function subscribePush() {
         applicationServerKey: urlBase64ToUint8Array(publicKey),
       });
     }
-    // サーバーへ送信
     await fetch('/api/push_subscribe.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -61,7 +82,6 @@ async function subscribePush() {
     });
 
     if (statusEl) statusEl.textContent = 'プッシュ通知をONにしました。';
-    const btn = document.getElementById('push-notify-btn');
     if (btn) {
       btn.textContent = 'プッシュ通知ON済み';
       btn.disabled = true;
@@ -69,7 +89,7 @@ async function subscribePush() {
     }
     return 'granted';
   } catch (e) {
-    if (statusEl) statusEl.textContent = 'プッシュ通知の設定中にエラーが発生しました。';
+    if (statusEl) statusEl.textContent = 'プッシュ通知の購読中にエラーが発生しました。';
     return 'error';
   }
 }
