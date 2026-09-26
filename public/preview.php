@@ -146,14 +146,14 @@ html_head('[プレビュー] ' . h($event['name']), true, $theme_css ? "<style>{
         <input type="hidden" name="action"     value="publish">
         <button type="submit" class="btn btn-success">公開</button>
       </form>
-      <a href="/edit?id=<?= h($event_id) ?>" class="btn btn-secondary">編集</a>
+      <a href="/create" class="btn btn-secondary">作成画面に戻る</a>
     </div>
   </div>
 </div>
 
 <!-- スマートフォン用固定ボタン -->
 <div class="fixed-bottom-bar">
-  <a href="/edit?id=<?= h($event_id) ?>" class="btn btn-secondary">編集</a>
+  <a href="/create" class="btn btn-secondary">作成画面に戻る</a>
   <form method="post" action="/preview?id=<?= h($event_id) ?>" style="flex:1;">
     <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
     <input type="hidden" name="action"     value="publish">

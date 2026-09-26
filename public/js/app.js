@@ -150,42 +150,141 @@ function updateRunnerLabels() {
   });
 }
 
-/* ── 開始・終了日時の自動入力 ───────────────────────── */
-function initAutoDateButtons() {
-  document.getElementById('auto-start-btn')?.addEventListener('click', () => {
+/* ── 開始・終了日時の自動入力（トグル式） ──────────── */
+let autoStartEnabled = false;
+let autoEndEnabled   = false;
+
+function setAutoStartState(enabled) {
+  autoStartEnabled = enabled;
+  const btn   = document.getElementById('auto-start-btn');
+  const input = document.getElementById('event-start-at');
+  if (!btn || !input) return;
+  if (enabled) {
+    btn.classList.add('btn-primary');
+    btn.classList.remove('btn-secondary');
+    btn.textContent = '自動入力 ON';
+    input.disabled = true;
+    // 即時反映
     const values = [...document.querySelectorAll('.runner-start')]
       .map((el) => el.value).filter(Boolean).sort();
-    if (values.length) document.getElementById('event-start-at').value = values[0];
+    if (values.length) input.value = values[0];
+  } else {
+    btn.classList.add('btn-secondary');
+    btn.classList.remove('btn-primary');
+    btn.textContent = '自動入力 OFF';
+    input.disabled = false;
+  }
+}
+
+function setAutoEndState(enabled) {
+  autoEndEnabled = enabled;
+  const btn   = document.getElementById('auto-end-btn');
+  const input = document.getElementById('event-end-at');
+  if (!btn || !input) return;
+  if (enabled) {
+    btn.classList.add('btn-primary');
+    btn.classList.remove('btn-secondary');
+    btn.textContent = '自動入力 ON';
+    input.disabled = true;
+    // 即時反映
+    const values = [...document.querySelectorAll('.runner-end')]
+      .map((el) => el.value).filter(Boolean).sort();
+    if (values.length) input.value = values[values.length - 1];
+  } else {
+    btn.classList.add('btn-secondary');
+    btn.classList.remove('btn-primary');
+    btn.textContent = '自動入力 OFF';
+    input.disabled = false;
+  }
+}
+
+function triggerAutoDate() {
+  if (autoStartEnabled) {
+    const values = [...document.querySelectorAll('.runner-start')]
+      .map((el) => el.value).filter(Boolean).sort();
+    const input = document.getElementById('event-start-at');
+    if (values.length && input) input.value = values[0];
+  }
+  if (autoEndEnabled) {
+    const values = [...document.querySelectorAll('.runner-end')]
+      .map((el) => el.value).filter(Boolean).sort();
+    const input = document.getElementById('event-end-at');
+    if (values.length && input) input.value = values[values.length - 1];
+  }
+}
+
+function initAutoDateButtons() {
+  document.getElementById('auto-start-btn')?.addEventListener('click', () => {
+    setAutoStartState(!autoStartEnabled);
   });
 
   document.getElementById('auto-end-btn')?.addEventListener('click', () => {
-    const values = [...document.querySelectorAll('.runner-end')]
-      .map((el) => el.value).filter(Boolean).sort();
-    if (values.length) document.getElementById('event-end-at').value = values[values.length - 1];
+    setAutoEndState(!autoEndEnabled);
   });
+
+  // 走者の日時変更を監視して自動反映
+  document.getElementById('runners-container')?.addEventListener('change', (e) => {
+    if (e.target.classList.contains('runner-start') || e.target.classList.contains('runner-end')) {
+      triggerAutoDate();
+    }
+  });
+
+  // 初期状態はOFF
+  setAutoStartState(false);
+  setAutoEndState(false);
 }
 
 /* ── テーマプリセットセレクター ─────────────────────── */
 const THEME_PRESETS = {
-  default:    { bgcolor: '#f5f5f5', fontcolor: '#212121', headercolor: '#4a90e2', bordercolor: '#e0e0e0', cardcolor: '#ffffff', buttoncolor: '#4a90e2' },
-  chic:       { bgcolor: '#1a1a2e', fontcolor: '#e0e0e0', headercolor: '#16213e', bordercolor: '#0f3460', cardcolor: '#16213e', buttoncolor: '#e94560' },
-  cute:       { bgcolor: '#fff0f6', fontcolor: '#5c0035', headercolor: '#ff6fa8', bordercolor: '#ffb3d1', cardcolor: '#ffffff', buttoncolor: '#ff6fa8' },
-  gorgeous:   { bgcolor: '#1a0a00', fontcolor: '#f5e6c8', headercolor: '#8b6914', bordercolor: '#c8a84b', cardcolor: '#2a1a00', buttoncolor: '#c8a84b' },
-  dark:       { bgcolor: '#121212', fontcolor: '#e0e0e0', headercolor: '#1e1e1e', bordercolor: '#333333', cardcolor: '#1e1e1e', buttoncolor: '#5ba4f5' },
-  brightness: { bgcolor: '#fffde7', fontcolor: '#212121', headercolor: '#fdd835', bordercolor: '#f9a825', cardcolor: '#ffffff', buttoncolor: '#f9a825' },
+  default:    { label: 'デフォルト', bgcolor: '#f5f5f5', fontcolor: '#212121', headercolor: '#4a90e2', bordercolor: '#e0e0e0', cardcolor: '#ffffff', buttoncolor: '#4a90e2' },
+  chic:       { label: 'シック',     bgcolor: '#1a1a2e', fontcolor: '#e0e0e0', headercolor: '#16213e', bordercolor: '#0f3460', cardcolor: '#16213e', buttoncolor: '#e94560' },
+  cute:       { label: 'キュート',   bgcolor: '#fff0f6', fontcolor: '#5c0035', headercolor: '#ff6fa8', bordercolor: '#ffb3d1', cardcolor: '#ffffff', buttoncolor: '#ff6fa8' },
+  gorgeous:   { label: 'ゴージャス', bgcolor: '#1a0a00', fontcolor: '#f5e6c8', headercolor: '#8b6914', bordercolor: '#c8a84b', cardcolor: '#2a1a00', buttoncolor: '#c8a84b' },
+  dark:       { label: 'ダーク',     bgcolor: '#121212', fontcolor: '#e0e0e0', headercolor: '#1e1e1e', bordercolor: '#333333', cardcolor: '#1e1e1e', buttoncolor: '#5ba4f5' },
+  brightness: { label: '明るい',     bgcolor: '#fffde7', fontcolor: '#212121', headercolor: '#fdd835', bordercolor: '#f9a825', cardcolor: '#ffffff', buttoncolor: '#f9a825' },
 };
+
+const COLOR_FIELDS = ['bgcolor', 'fontcolor', 'headercolor', 'bordercolor'];
+
+function updateColorInputLabels() {
+  COLOR_FIELDS.forEach((key) => {
+    const input = document.querySelector(`input[name="${key}"]`);
+    if (!input) return;
+    let label = input.parentElement.querySelector('.color-code-label');
+    if (!label) {
+      label = document.createElement('span');
+      label.className = 'color-code-label';
+      label.style.cssText = 'display:block;font-size:0.78rem;color:var(--color-muted);margin-top:0.2rem;';
+      input.parentElement.appendChild(label);
+    }
+    label.textContent = input.value.toUpperCase();
+    input.style.outline = `3px solid ${input.value}`;
+  });
+}
 
 function initThemeSelector() {
   const container = document.getElementById('theme-presets');
   if (!container) return;
 
+  // 色コードラベルを初期化
+  updateColorInputLabels();
+  COLOR_FIELDS.forEach((key) => {
+    document.querySelector(`input[name="${key}"]`)?.addEventListener('input', updateColorInputLabels);
+  });
+
   Object.entries(THEME_PRESETS).forEach(([key, colors]) => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'theme-preset-btn';
-    btn.title = key;
+    btn.title = colors.label;
     btn.style.background = colors.headercolor;
     btn.dataset.theme = key;
+
+    const labelEl = document.createElement('span');
+    labelEl.className = 'theme-preset-btn__label';
+    labelEl.textContent = colors.label;
+    btn.appendChild(labelEl);
+
     btn.addEventListener('click', () => {
       applyThemePreset(colors);
       container.querySelectorAll('.theme-preset-btn').forEach((b) => b.classList.remove('selected'));
@@ -196,16 +295,11 @@ function initThemeSelector() {
 }
 
 function applyThemePreset(colors) {
-  const fields = {
-    bgcolor:     'input[name="bgcolor"]',
-    fontcolor:   'input[name="fontcolor"]',
-    headercolor: 'input[name="headercolor"]',
-    bordercolor: 'input[name="bordercolor"]',
-  };
-  Object.entries(fields).forEach(([key, selector]) => {
-    const el = document.querySelector(selector);
+  COLOR_FIELDS.forEach((key) => {
+    const el = document.querySelector(`input[name="${key}"]`);
     if (el) el.value = colors[key];
   });
+  updateColorInputLabels();
 }
 
 /* ── XSS用エスケープ ─────────────────────────────────── */

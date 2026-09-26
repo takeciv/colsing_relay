@@ -42,7 +42,7 @@ if (!$event || $event['status'] !== 'published') {
 
 $runner_stmt = $db->prepare(
     'SELECT id, name, summary, image_path, profile_url, stream_url,
-            start_at, end_at, status
+            start_at, end_at, status, runner_bgcolor
        FROM event_runners
       WHERE event_id = ?
       ORDER BY start_at ASC, sort_order ASC'
@@ -106,17 +106,26 @@ html_head(h($event['name']), $is_logged, $theme_css ? "<style>{$theme_css}</styl
   <?php endif ?>
 
   <div class="container event-detail-body">
-    <h1 class="event-title"><?= h($event['name']) ?></h1>
-    <dl class="event-info-block">
+    <h1 class="event-title" style="text-align:center;"><?= h($event['name']) ?></h1>
+    <dl class="event-info-block" style="text-align:center;">
       <dt>起案者</dt><dd><?= h($event['organizer']) ?></dd>
       <?php if ($event['summary']): ?>
-        <dt>概要</dt><dd style="white-space:pre-wrap;"><?= h($event['summary']) ?></dd>
+        <dt>概要</dt>
+        <dd style="white-space:pre-wrap;border:1px solid var(--theme-border,var(--color-border));border-radius:6px;padding:0.6rem 0.9rem;text-align:left;"><?= h($event['summary']) ?></dd>
       <?php endif ?>
-      <?php if ($event['start_at']): ?>
-        <dt>開始</dt><dd><?= h(date('Y/m/d H:i', strtotime($event['start_at']))) ?></dd>
-      <?php endif ?>
-      <?php if ($event['end_at']): ?>
-        <dt>終了</dt><dd><?= h(date('Y/m/d H:i', strtotime($event['end_at']))) ?></dd>
+      <?php if ($event['start_at'] || $event['end_at']): ?>
+        <dt>期間</dt>
+        <dd>
+          <?php if ($event['start_at']): ?>
+            <?= h(date('Y/m/d H:i', strtotime($event['start_at']))) ?>
+          <?php endif ?>
+          <?php if ($event['start_at'] && $event['end_at']): ?>
+            ～
+          <?php endif ?>
+          <?php if ($event['end_at']): ?>
+            <?= h(date('Y/m/d H:i', strtotime($event['end_at']))) ?>
+          <?php endif ?>
+        </dd>
       <?php endif ?>
     </dl>
 
@@ -125,7 +134,7 @@ html_head(h($event['name']), $is_logged, $theme_css ? "<style>{$theme_css}</styl
     <!-- 走者一覧（初期レンダリング） -->
     <div id="runners-list">
       <?php foreach ($runners as $r): ?>
-        <div class="runner-card" data-runner-id="<?= h($r['id']) ?>">
+        <div class="runner-card" data-runner-id="<?= h($r['id']) ?>"<?= $r['runner_bgcolor'] ? ' style="background-color:' . h($r['runner_bgcolor']) . ';"' : '' ?>>
           <div class="runner-card__top">
             <?php if ($r['image_path']): ?>
               <img class="runner-card__img" src="<?= h($r['image_path']) ?>" alt="">
@@ -258,6 +267,7 @@ document.getElementById('follow-btn')?.addEventListener('click', async () => {
   if (await sendFollow('follow')) location.reload();
 });
 document.getElementById('unfollow-btn')?.addEventListener('click', async () => {
+  if (!confirm('フォロー解除しますか？')) return;
   if (await sendFollow('unfollow')) location.reload();
 });
 

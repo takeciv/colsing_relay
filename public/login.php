@@ -89,6 +89,9 @@ html_head('ログイン');
       </div>
       <button type="submit" class="btn btn-primary btn-block">ワンタイムパスワードを送信</button>
     </form>
+    <div style="margin-top:0.75rem;text-align:center;">
+      <button type="button" class="btn btn-secondary btn-block" onclick="history.back()">キャンセル</button>
+    </div>
   </div>
 </div>
 <?php html_foot(); ?>

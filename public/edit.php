@@ -293,8 +293,6 @@ html_head('イベント詳細更新 - ' . h($event['name']), true);
     <!-- PC用ボタン -->
     <div class="pc-only-actions">
       <button type="submit" name="action" value="update"  class="btn btn-primary">更新</button>
-      <button type="submit" name="action" value="publish" class="btn btn-success"
-        onclick="return confirm('公開しますか？')">公開</button>
       <button type="submit" name="action" value="delete"  class="btn btn-danger"
         onclick="return confirm('削除すると元に戻せません。削除しますか？')" style="margin-left:auto;">削除</button>
       <a href="/portal" class="btn btn-secondary">キャンセル</a>
@@ -305,14 +303,9 @@ html_head('イベント詳細更新 - ' . h($event['name']), true);
 <!-- スマートフォン用固定ボタン -->
 <div class="fixed-bottom-bar">
   <a href="/portal" class="btn btn-secondary">キャンセル</a>
-  <form method="post" action="/edit?id=<?= h($event_id) ?>" style="flex:1;display:flex;gap:0.4rem;">
-    <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
-    <button type="submit" name="action" value="publish" class="btn btn-success"
-      onclick="return confirm('公開しますか？')" style="flex:1;">公開</button>
-    <button type="submit" name="action" value="update"
-      onclick="document.getElementById('runner-form').querySelector('form').submit();return false;"
-      class="btn btn-primary" style="flex:2;">更新</button>
-  </form>
+  <button type="submit" form="runner-form"
+    onclick="document.getElementById('runner-form').querySelector('form').submit();return false;"
+    class="btn btn-primary" style="flex:2;">更新</button>
 </div>
 
 <script>

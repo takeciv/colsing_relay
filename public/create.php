@@ -21,7 +21,7 @@ $errors = [];
 $active_stmt = $db->prepare(
     "SELECT COUNT(*) AS cnt FROM events
       WHERE user_id = ?
-        AND (status = 'preview' OR end_at > NOW())"
+        AND (status = 'preview' OR end_at IS NULL OR end_at > NOW())"
 );
 $active_stmt->execute([$uid]);
 $active_count = (int)$active_stmt->fetch()['cnt'];
