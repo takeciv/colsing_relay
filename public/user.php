@@ -66,5 +66,14 @@ html_head('ユーザー情報更新', true);
       <a href="/portal" class="btn btn-secondary" style="margin-left:0.5rem;">キャンセル</a>
     </form>
   </div>
+
+  <div class="card" style="max-width:480px;margin-top:1rem;">
+    <div class="card-header">プッシュ通知</div>
+    <p style="font-size:0.9rem;color:var(--color-muted);margin-bottom:0.75rem;">
+      走者の配信が開始されたときにプッシュ通知を受け取ることができます。
+    </p>
+    <button type="button" id="push-notify-btn" class="btn btn-secondary">プッシュ通知をONにする</button>
+    <p id="push-notify-status" style="font-size:0.85rem;color:var(--color-muted);margin-top:0.5rem;"></p>
+  </div>
 </div>
 <?php html_foot(); ?>

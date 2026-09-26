@@ -17,15 +17,30 @@ if ('serviceWorker' in navigator) {
 /* ── Web Push 通知許可 & サブスクリプション ─────────── */
 /**
  * VAPID公開鍵はPHPから <meta name="vapid-public-key" content="..."> で埋め込む。
+ * ユーザー情報更新画面の「プッシュ通知をONにする」ボタンから呼び出す。
+ * @returns {Promise<'granted'|'denied'|'error'>}
  */
 async function subscribePush() {
-  if (!('PushManager' in window)) return;
+  const statusEl = document.getElementById('push-notify-status');
+
+  if (!('PushManager' in window)) {
+    if (statusEl) statusEl.textContent = 'このブラウザはプッシュ通知に対応していません。';
+    return 'error';
+  }
   const metaKey = document.querySelector('meta[name="vapid-public-key"]');
-  if (!metaKey) return;
+  if (!metaKey || !metaKey.getAttribute('content')) {
+    if (statusEl) statusEl.textContent = 'プッシュ通知の設定が未完了です。';
+    return 'error';
+  }
   const publicKey = metaKey.getAttribute('content');
-  if (!publicKey) return;
 
   try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') {
+      if (statusEl) statusEl.textContent = '通知の許可が得られませんでした。ブラウザの設定を確認してください。';
+      return 'denied';
+    }
+
     const sw = await navigator.serviceWorker.ready;
     let sub = await sw.pushManager.getSubscription();
     if (!sub) {
@@ -44,8 +59,18 @@ async function subscribePush() {
         auth:     arrayBufferToBase64url(sub.getKey('auth')),
       }),
     });
+
+    if (statusEl) statusEl.textContent = 'プッシュ通知をONにしました。';
+    const btn = document.getElementById('push-notify-btn');
+    if (btn) {
+      btn.textContent = 'プッシュ通知ON済み';
+      btn.disabled = true;
+      btn.classList.replace('btn-secondary', 'btn-primary');
+    }
+    return 'granted';
   } catch (e) {
-    // 通知許可が拒否された場合などは無視
+    if (statusEl) statusEl.textContent = 'プッシュ通知の設定中にエラーが発生しました。';
+    return 'error';
   }
 }
 
@@ -318,10 +343,22 @@ document.addEventListener('DOMContentLoaded', () => {
   initAutoDateButtons();
   initThemeSelector();
 
-  // ログイン済みページでは通知購読を試みる
-  if (document.body.dataset.loggedIn === '1') {
-    Notification.requestPermission().then((perm) => {
-      if (perm === 'granted') subscribePush();
-    });
+  // ユーザー情報更新画面のプッシュ通知ボタン
+  const pushBtn = document.getElementById('push-notify-btn');
+  if (pushBtn) {
+    // 既に通知許可済みの場合はボタン状態を更新
+    if (Notification.permission === 'granted') {
+      pushBtn.textContent = 'プッシュ通知ON済み';
+      pushBtn.disabled = true;
+      pushBtn.classList.replace('btn-secondary', 'btn-primary');
+      const statusEl = document.getElementById('push-notify-status');
+      if (statusEl) statusEl.textContent = 'プッシュ通知は既にONになっています。';
+    } else if (Notification.permission === 'denied') {
+      pushBtn.textContent = 'プッシュ通知がブロックされています';
+      pushBtn.disabled = true;
+      const statusEl = document.getElementById('push-notify-status');
+      if (statusEl) statusEl.textContent = 'ブラウザの設定から通知を許可してください。';
+    }
+    pushBtn.addEventListener('click', () => subscribePush());
   }
 });
