@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $runner_stmt = $db->prepare(
     'SELECT id, name, summary, image_path, profile_url, stream_url,
-            start_at, end_at, status
+            start_at, end_at, status, runner_bgcolor
        FROM event_runners
       WHERE event_id = ?
       ORDER BY start_at ASC, sort_order ASC'
@@ -120,7 +120,7 @@ html_head('[プレビュー] ' . h($event['name']), true, $theme_css ? "<style>{
     <hr class="section-divider">
 
     <?php foreach ($runners as $r): ?>
-      <div class="runner-card">
+      <div class="runner-card"<?= $r['runner_bgcolor'] ? ' style="background-color:' . h($r['runner_bgcolor']) . ';"' : '' ?>>
         <div class="runner-card__top">
           <?php if ($r['image_path']): ?>
             <img class="runner-card__img" src="<?= h($r['image_path']) ?>" alt="">
