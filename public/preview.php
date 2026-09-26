@@ -40,14 +40,27 @@ if (!$event || $event['user_id'] !== $uid) {
     exit;
 }
 
-// 公開処理
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'publish') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf_token();
-    $upd = $db->prepare("UPDATE events SET status = 'published' WHERE event_id = ? AND user_id = ?");
-    $upd->execute([$event_id, $uid]);
-    flash('success', 'イベントを公開しました。');
-    header('Location: /portal');
-    exit;
+    $action = $_POST['action'] ?? '';
+
+    // 公開処理
+    if ($action === 'publish') {
+        $upd = $db->prepare("UPDATE events SET status = 'published' WHERE event_id = ? AND user_id = ?");
+        $upd->execute([$event_id, $uid]);
+        flash('success', 'イベントを公開しました。');
+        header('Location: /portal');
+        exit;
+    }
+
+    // 作成画面に戻る：プレビューイベントをDBから削除し、セッションの復元データを維持してリダイレクト
+    if ($action === 'back_to_create') {
+        $del = $db->prepare("DELETE FROM events WHERE event_id = ? AND user_id = ? AND status = 'preview'");
+        $del->execute([$event_id, $uid]);
+        // セッションに保存済みの create_restore はそのまま維持する
+        header('Location: /create');
+        exit;
+    }
 }
 
 $runner_stmt = $db->prepare(
@@ -146,14 +159,22 @@ html_head('[プレビュー] ' . h($event['name']), true, $theme_css ? "<style>{
         <input type="hidden" name="action"     value="publish">
         <button type="submit" class="btn btn-success">公開</button>
       </form>
-      <a href="/create" class="btn btn-secondary">作成画面に戻る</a>
+      <form method="post" action="/preview?id=<?= h($event_id) ?>" style="display:inline;">
+        <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
+        <input type="hidden" name="action"     value="back_to_create">
+        <button type="submit" class="btn btn-secondary">作成画面に戻る</button>
+      </form>
     </div>
   </div>
 </div>
 
 <!-- スマートフォン用固定ボタン -->
 <div class="fixed-bottom-bar">
-  <a href="/create" class="btn btn-secondary">作成画面に戻る</a>
+  <form method="post" action="/preview?id=<?= h($event_id) ?>" style="flex:1;">
+    <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
+    <input type="hidden" name="action"     value="back_to_create">
+    <button type="submit" class="btn btn-secondary btn-block">作成画面に戻る</button>
+  </form>
   <form method="post" action="/preview?id=<?= h($event_id) ?>" style="flex:1;">
     <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
     <input type="hidden" name="action"     value="publish">

@@ -236,15 +236,15 @@ function initAutoDateButtons() {
 
 /* ── テーマプリセットセレクター ─────────────────────── */
 const THEME_PRESETS = {
-  default:    { label: 'デフォルト', bgcolor: '#f5f5f5', fontcolor: '#212121', headercolor: '#4a90e2', bordercolor: '#e0e0e0', cardcolor: '#ffffff', buttoncolor: '#4a90e2' },
-  chic:       { label: 'シック',     bgcolor: '#1a1a2e', fontcolor: '#e0e0e0', headercolor: '#16213e', bordercolor: '#0f3460', cardcolor: '#16213e', buttoncolor: '#e94560' },
-  cute:       { label: 'キュート',   bgcolor: '#fff0f6', fontcolor: '#5c0035', headercolor: '#ff6fa8', bordercolor: '#ffb3d1', cardcolor: '#ffffff', buttoncolor: '#ff6fa8' },
-  gorgeous:   { label: 'ゴージャス', bgcolor: '#1a0a00', fontcolor: '#f5e6c8', headercolor: '#8b6914', bordercolor: '#c8a84b', cardcolor: '#2a1a00', buttoncolor: '#c8a84b' },
-  dark:       { label: 'ダーク',     bgcolor: '#121212', fontcolor: '#e0e0e0', headercolor: '#1e1e1e', bordercolor: '#333333', cardcolor: '#1e1e1e', buttoncolor: '#5ba4f5' },
-  brightness: { label: '明るい',     bgcolor: '#fffde7', fontcolor: '#212121', headercolor: '#fdd835', bordercolor: '#f9a825', cardcolor: '#ffffff', buttoncolor: '#f9a825' },
+  default:    { label: 'デフォルト', bgcolor: '#f5f5f5', fontcolor: '#212121', headercolor: '#4a90e2', bordercolor: '#e0e0e0', cardcolor: '#ffffff', buttoncolor: '#4a90e2', runbgcolor: '#ffffff' },
+  chic:       { label: 'シック',     bgcolor: '#1a1a2e', fontcolor: '#e0e0e0', headercolor: '#16213e', bordercolor: '#0f3460', cardcolor: '#16213e', buttoncolor: '#e94560', runbgcolor: '#16213e' },
+  cute:       { label: 'キュート',   bgcolor: '#fff0f6', fontcolor: '#5c0035', headercolor: '#ff6fa8', bordercolor: '#ffb3d1', cardcolor: '#ffffff', buttoncolor: '#ff6fa8', runbgcolor: '#ffe0ef' },
+  gorgeous:   { label: 'ゴージャス', bgcolor: '#1a0a00', fontcolor: '#f5e6c8', headercolor: '#8b6914', bordercolor: '#c8a84b', cardcolor: '#2a1a00', buttoncolor: '#c8a84b', runbgcolor: '#2a1a00' },
+  dark:       { label: 'ダーク',     bgcolor: '#121212', fontcolor: '#e0e0e0', headercolor: '#1e1e1e', bordercolor: '#333333', cardcolor: '#1e1e1e', buttoncolor: '#5ba4f5', runbgcolor: '#1e1e1e' },
+  brightness: { label: '明るい',     bgcolor: '#fffde7', fontcolor: '#212121', headercolor: '#fdd835', bordercolor: '#f9a825', cardcolor: '#ffffff', buttoncolor: '#f9a825', runbgcolor: '#ffffff' },
 };
 
-const COLOR_FIELDS = ['bgcolor', 'fontcolor', 'headercolor', 'bordercolor'];
+const COLOR_FIELDS = ['bgcolor', 'fontcolor', 'headercolor', 'bordercolor', 'runbgcolor'];
 
 function updateColorInputLabels() {
   COLOR_FIELDS.forEach((key) => {

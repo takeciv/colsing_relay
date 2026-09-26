@@ -15,10 +15,17 @@ start_session();
 $uid        = get_logged_in_user_id();
 $is_logged  = $uid !== null;
 
-$keyword = trim($_GET['q'] ?? '');
-$page    = max(1, (int)($_GET['page'] ?? 1));
-$sort    = in_array($_GET['sort'] ?? '', ['start_at', 'name', 'nickname']) ? $_GET['sort'] : 'start_at';
-$offset  = ($page - 1) * SEARCH_PAGE_SIZE;
+$keyword    = trim($_GET['q'] ?? '');
+$page       = max(1, (int)($_GET['page'] ?? 1));
+$sort       = in_array($_GET['sort'] ?? '', ['start_at', 'name', 'nickname']) ? $_GET['sort'] : 'start_at';
+$offset     = ($page - 1) * SEARCH_PAGE_SIZE;
+
+// 初期表示（パラメータなし）は ?q= を付けてリダイレクトし全件検索状態にする
+if (!isset($_GET['q']) && !isset($_GET['sort']) && !isset($_GET['page'])) {
+    header('Location: /index?q=');
+    exit;
+}
+$searched = true;
 
 $db = get_db();
 
@@ -105,7 +112,7 @@ html_head('イベント検索', $is_logged);
     <button type="submit" class="btn btn-primary">検索</button>
   </form>
 
-  <?php if (isset($_GET['q']) || isset($_GET['sort'])): ?>
+  <?php if ($searched): ?>
     <hr class="section-divider">
 
     <div class="sort-bar">

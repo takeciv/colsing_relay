@@ -79,21 +79,31 @@ function verify_otp(string $email, string $input_token): string
 }
 
 /**
- * IPアドレスに対してレート制限をチェックする。
+ * IPアドレスとメールアドレスに対してレート制限をチェックする。
  *
  * @return string|null null = 制限なし, 'duplicate' = 短期重複（2回目を無視）, 'rate_limit' = 制限超過
  */
-function check_rate_limit(string $ip): ?string
+function check_rate_limit(string $ip, string $email = ''): ?string
 {
     $db = get_db();
 
-    // 1. 同一IPの短期ウィンドウ内リクエスト数チェック（1分以内に2回 → 2回目を無視）
-    $stmt = $db->prepare(
-        'SELECT COUNT(*) AS cnt FROM otp_rate_limits
-          WHERE ip_address = ?
-            AND requested_at > DATE_SUB(NOW(), INTERVAL ? SECOND)'
-    );
-    $stmt->execute([$ip, OTP_RATE_LIMIT_IP_SHORT_WINDOW_SEC]);
+    // 1. 同一IPかつ同一アドレスの短期ウィンドウ内リクエスト数チェック（1分以内に2回 → 2回目を無視）
+    if ($email !== '') {
+        $stmt = $db->prepare(
+            'SELECT COUNT(*) AS cnt FROM otp_rate_limits
+              WHERE ip_address = ?
+                AND email = LOWER(?)
+                AND requested_at > DATE_SUB(NOW(), INTERVAL ? SECOND)'
+        );
+        $stmt->execute([$ip, $email, OTP_RATE_LIMIT_IP_SHORT_WINDOW_SEC]);
+    } else {
+        $stmt = $db->prepare(
+            'SELECT COUNT(*) AS cnt FROM otp_rate_limits
+              WHERE ip_address = ?
+                AND requested_at > DATE_SUB(NOW(), INTERVAL ? SECOND)'
+        );
+        $stmt->execute([$ip, OTP_RATE_LIMIT_IP_SHORT_WINDOW_SEC]);
+    }
     $row = $stmt->fetch();
     if ((int)$row['cnt'] >= OTP_RATE_LIMIT_IP_SHORT_MAX) {
         return 'duplicate';
@@ -126,15 +136,15 @@ function check_rate_limit(string $ip): ?string
 }
 
 /**
- * レート制限ログにIPアドレスを記録する。
+ * レート制限ログにIPアドレスとメールアドレスを記録する。
  */
-function record_rate_limit(string $ip): void
+function record_rate_limit(string $ip, string $email = ''): void
 {
     $db = get_db();
     $stmt = $db->prepare(
-        'INSERT INTO otp_rate_limits (ip_address) VALUES (?)'
+        'INSERT INTO otp_rate_limits (ip_address, email) VALUES (?, LOWER(?))'
     );
-    $stmt->execute([$ip]);
+    $stmt->execute([$ip, $email]);
 }
 
 /**

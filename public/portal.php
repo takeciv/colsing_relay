@@ -88,10 +88,8 @@ html_head('マイページ', true);
   <?php render_flash() ?>
 
   <!-- 自分のイベント -->
+  <?php if (!empty($own_events)): ?>
   <h2 style="font-size:1rem;font-weight:600;margin-bottom:0.75rem;">自分のイベント</h2>
-  <?php if (empty($own_events)): ?>
-    <p style="color:var(--color-muted);font-size:0.9rem;">まだイベントを作成していません。</p>
-  <?php else: ?>
     <ul class="event-list">
       <?php foreach ($own_events as $ev): ?>
         <li class="event-item">

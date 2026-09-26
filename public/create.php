@@ -32,17 +32,25 @@ if ($active_count >= EVENT_MAX_ACTIVE) {
     exit;
 }
 
+// ── プレビューから戻った際の入力内容復元 ─────────────
+$restore = null;
+if (!empty($_SESSION['create_restore'])) {
+    $restore = $_SESSION['create_restore'];
+    unset($_SESSION['create_restore']);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf_token();
 
-    $name      = trim($_POST['name']      ?? '');
-    $summary   = trim($_POST['summary']   ?? '');
-    $start_at  = trim($_POST['start_at']  ?? '');
-    $end_at    = trim($_POST['end_at']    ?? '');
-    $bgcolor     = trim($_POST['bgcolor']     ?? '');
-    $fontcolor   = trim($_POST['fontcolor']   ?? '');
-    $headercolor = trim($_POST['headercolor'] ?? '');
-    $bordercolor = trim($_POST['bordercolor'] ?? '');
+    $name         = trim($_POST['name']         ?? '');
+    $summary      = trim($_POST['summary']      ?? '');
+    $start_at     = trim($_POST['start_at']     ?? '');
+    $end_at       = trim($_POST['end_at']       ?? '');
+    $bgcolor      = trim($_POST['bgcolor']      ?? '');
+    $fontcolor    = trim($_POST['fontcolor']    ?? '');
+    $headercolor  = trim($_POST['headercolor']  ?? '');
+    $bordercolor  = trim($_POST['bordercolor']  ?? '');
+    $runbgcolor   = trim($_POST['runbgcolor']   ?? '');
 
     if ($name === '') {
         $errors[] = 'イベント名は必須です。';
@@ -88,8 +96,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $run_ins = $db->prepare(
                 'INSERT INTO event_runners
-                   (event_id, name, summary, image_path, profile_url, stream_url, start_at, end_at, sort_order)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                   (event_id, name, summary, image_path, profile_url, stream_url,
+                    start_at, end_at, runner_bgcolor, sort_order)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
             );
             $run_ins->execute([
                 $event_id,
@@ -100,6 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 trim($r['stream_url']  ?? '') ?: null,
                 trim($r['start_at']    ?? '') ?: null,
                 trim($r['end_at']      ?? '') ?: null,
+                $runbgcolor ?: null,
                 (int)($r['sort_order'] ?? 0),
             ]);
         }
@@ -107,10 +117,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // 走者画像アップロード処理
         save_runner_images($event_id, $runners_post, $db);
 
+        // プレビューへ遷移前に入力内容をセッションに保存（戻り用）
+        $_SESSION['create_restore'] = [
+            'name'        => $name,
+            'summary'     => $summary,
+            'start_at'    => $start_at,
+            'end_at'      => $end_at,
+            'bgcolor'     => $bgcolor,
+            'fontcolor'   => $fontcolor,
+            'headercolor' => $headercolor,
+            'bordercolor' => $bordercolor,
+            'runbgcolor'  => $runbgcolor,
+            'runners'     => $runners_post,
+            'banner_path' => $banner_path,
+            'preview_event_id' => $event_id,
+        ];
+
         header('Location: /preview?id=' . urlencode($event_id));
         exit;
     }
 }
+
+// 復元データがある場合はそちらを優先（バリデーションエラー時は $_POST を使う）
+$form = $restore ?? [];
 
 $csrf = get_csrf_token();
 html_head('イベント詳細作成', true);
@@ -143,19 +172,23 @@ html_head('イベント詳細作成', true);
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-top:0.5rem;">
         <div class="form-group" style="margin-bottom:0;">
           <label class="form-label">背景色</label>
-          <input type="color" name="bgcolor"     class="form-control" value="<?= h($_POST['bgcolor']     ?? '#f5f5f5') ?>">
+          <input type="color" name="bgcolor"     class="form-control" value="<?= h($form['bgcolor']     ?? $_POST['bgcolor']     ?? '#f5f5f5') ?>">
         </div>
         <div class="form-group" style="margin-bottom:0;">
           <label class="form-label">文字色</label>
-          <input type="color" name="fontcolor"   class="form-control" value="<?= h($_POST['fontcolor']   ?? '#212121') ?>">
+          <input type="color" name="fontcolor"   class="form-control" value="<?= h($form['fontcolor']   ?? $_POST['fontcolor']   ?? '#212121') ?>">
         </div>
         <div class="form-group" style="margin-bottom:0;">
           <label class="form-label">ヘッダー色</label>
-          <input type="color" name="headercolor" class="form-control" value="<?= h($_POST['headercolor'] ?? '#4a90e2') ?>">
+          <input type="color" name="headercolor" class="form-control" value="<?= h($form['headercolor'] ?? $_POST['headercolor'] ?? '#4a90e2') ?>">
         </div>
         <div class="form-group" style="margin-bottom:0;">
           <label class="form-label">ボーダー色</label>
-          <input type="color" name="bordercolor" class="form-control" value="<?= h($_POST['bordercolor'] ?? '#e0e0e0') ?>">
+          <input type="color" name="bordercolor" class="form-control" value="<?= h($form['bordercolor'] ?? $_POST['bordercolor'] ?? '#e0e0e0') ?>">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">走者背景色</label>
+          <input type="color" name="runbgcolor"  class="form-control" value="<?= h($form['runbgcolor']  ?? $_POST['runbgcolor']  ?? '#ffffff') ?>">
         </div>
       </div>
     </div>
@@ -163,19 +196,22 @@ html_head('イベント詳細作成', true);
     <!-- バナー画像 -->
     <div class="form-group">
       <label class="form-label">バナー画像（PNG/JPG）</label>
+      <?php if (!empty($form['banner_path'])): ?>
+        <img src="<?= h($form['banner_path']) ?>" style="max-height:80px;margin-bottom:0.4rem;display:block;">
+      <?php endif ?>
       <input type="file" name="banner_image" class="form-control" accept="image/png,image/jpeg">
     </div>
 
     <!-- イベント名 -->
     <div class="form-group">
       <label class="form-label">イベント名 <span style="color:var(--color-danger)">*</span></label>
-      <input type="text" name="name" class="form-control" value="<?= h($_POST['name'] ?? '') ?>" required>
+      <input type="text" name="name" class="form-control" value="<?= h($form['name'] ?? $_POST['name'] ?? '') ?>" required>
     </div>
 
     <!-- 概要 -->
     <div class="form-group">
       <label class="form-label">概要</label>
-      <textarea name="summary" class="form-control"><?= h($_POST['summary'] ?? '') ?></textarea>
+      <textarea name="summary" class="form-control"><?= h($form['summary'] ?? $_POST['summary'] ?? '') ?></textarea>
     </div>
 
     <!-- 開始・終了日時 -->
@@ -183,7 +219,7 @@ html_head('イベント詳細作成', true);
       <div>
         <label class="form-label" for="event-start-at">イベント開始日時</label>
         <input type="datetime-local" id="event-start-at" name="start_at" class="form-control"
-               value="<?= h($_POST['start_at'] ?? '') ?>">
+               value="<?= h($form['start_at'] ?? $_POST['start_at'] ?? '') ?>">
       </div>
       <button type="button" id="auto-start-btn" class="btn btn-secondary btn-sm" style="margin-bottom:0;">自動入力</button>
     </div>
@@ -191,7 +227,7 @@ html_head('イベント詳細作成', true);
       <div>
         <label class="form-label" for="event-end-at">イベント終了日時</label>
         <input type="datetime-local" id="event-end-at" name="end_at" class="form-control"
-               value="<?= h($_POST['end_at'] ?? '') ?>">
+               value="<?= h($form['end_at'] ?? $_POST['end_at'] ?? '') ?>">
       </div>
       <button type="button" id="auto-end-btn" class="btn btn-secondary btn-sm" style="margin-bottom:0;">自動入力</button>
     </div>
@@ -217,3 +253,16 @@ html_head('イベント詳細作成', true);
     onclick="document.querySelector('form').submit()">プレビューへ</button>
 </div>
 <?php html_foot(); ?>
+<?php if (!empty($form['runners'])): ?>
+<script>
+// プレビューから戻った際の走者データ復元
+document.addEventListener('DOMContentLoaded', () => {
+  const restoreRunners = <?= json_encode(array_values($form['runners']), JSON_UNESCAPED_UNICODE) ?>;
+  const container = document.getElementById('runners-container');
+  if (!container || !restoreRunners.length) return;
+  restoreRunners.forEach((r) => {
+    if (typeof addRunnerBlock === 'function') addRunnerBlock(container, r);
+  });
+});
+</script>
+<?php endif ?>

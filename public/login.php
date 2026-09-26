@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($error === '') {
         $ip = get_client_ip();
-        $rate = check_rate_limit($ip);
+        $rate = check_rate_limit($ip, $email);
 
         if ($rate === 'rate_limit') {
             $error = 'しばらく待ってから再実施してください。';
@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // OTP生成・送信
             $token = generate_otp();
             create_otp_token($email, $token);
-            record_rate_limit($ip);
+            record_rate_limit($ip, $email);
 
             // メール送信シェル呼び出し
             $shell = escapeshellarg(MAIL_SHELL_PATH);
