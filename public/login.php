@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $shell = escapeshellarg(MAIL_SHELL_PATH);
             $addr  = escapeshellarg(strtolower($email));
             $otp   = escapeshellarg($token);
-            @exec("{$shell} {$addr} {$otp} > /dev/null 2>&1 &");
+            @exec("bash {$shell} {$addr} {$otp} > /dev/null 2>&1 &");
 
             $_SESSION['otp_email'] = strtolower($email);
             header('Location: /otp');
